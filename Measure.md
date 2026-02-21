@@ -213,3 +213,24 @@ VAR _Result =
 RETURN
 _Result
 ```
+```DAX
+Date = 
+VAR firstOrderDate = MIN('Internet Sales'[OrderDate])
+VAR lastOrderDate = MAX('Internet Sales'[OrderDate])
+RETURN
+ADDCOLUMNS(
+    CALENDAR(firstOrderDate, lastOrderDate),
+    "DateKey", VALUE(FORMAT([Date], "yyyyMMdd")),
+    "Year", YEAR([Date]),
+    "Quarter", "Q" & QUARTER([Date]),
+    "Month", FORMAT([Date], "MMMM"),
+    "Month Short", FORMAT([Date], "MMM"),
+    "MonthOrder", MONTH([Date]),
+    "Week", "Wk " & WEEKNUM([Date]),
+    "Day", FORMAT([Date], "dddd"),
+    "Day Short", FORMAT([Date], "ddd"),
+    "DayOfMonth", DAY([Date]),
+    "DayOrder", WEEKDAY([Date], 2),
+    "YearMonth", FORMAT([Date], "yyyy-MM")
+)
+```
