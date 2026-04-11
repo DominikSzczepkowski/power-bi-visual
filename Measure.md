@@ -234,3 +234,13 @@ ADDCOLUMNS(
     "YearMonth", FORMAT([Date], "yyyy-MM")
 )
 ```
+```DAX
+Net Profit % to Goal Text Symbol = 
+SWITCH(
+    TRUE(),
+    [Net Profit % to Goal] = BLANK(), "-",
+    [Net Profit % to Goal] < 0.99 && [Net Profit % to Goal] > 0.4, "⚠️ ",
+    [Net Profit % to Goal] < 0.4, "🚨 ",
+    "✔ "
+    )
+```
