@@ -244,3 +244,160 @@ SWITCH(
     "✔ "
     )
 ```
+```DAX
+Gross Sales % to Avg. Month = 
+DIVIDE( [Gross Sales],[Gross Sales Avg. Month Total],0 )
+```
+```DAX
+Gross Sales % to Avg. Text Symbol = 
+SWITCH(
+    TRUE(),
+    [Gross Sales % to Avg. Month] = BLANK(), "-",
+    [Gross Sales % to Avg. Month] < 0.99 && [Gross Sales % to Avg. Month] > 0.4, "⚠️ ",
+    [Gross Sales % to Avg. Month] < 0.4, "🚨 ",
+    "✔ "
+    )
+```
+```DAX
+Gross Sales All = 
+CALCULATE(
+    [Gross Sales],
+    ALL(
+        DIM_Region
+    )
+)
+```
+```DAX
+Gross Sales Avg. Month = 
+CALCULATE(
+    AVERAGEX(
+        VALUES( DIM_Calendar[Month Year] ),
+        [Gross Sales]
+    ),
+    FILTER( ALLSELECTED( DIM_Calendar ), [Gross Sales] <> BLANK() )
+)
+```
+```DAX
+Gross Sales Avg. Month Total = 
+VAR _GrossSalesAvg = 
+CALCULATE(
+    AVERAGEX(
+        VALUES( DIM_Calendar[Month Year] ),
+        [Gross Sales]
+    ),
+    FILTER( ALL( DIM_Calendar ), [Gross Sales] <> BLANK() )
+)
+VAR __GrossSalesAvgTable = 
+FILTER (
+    ADDCOLUMNS(
+        SUMMARIZE(
+            DIM_Calendar,
+            DIM_Calendar[Month Year]
+        ),
+    "GrossSalesAverage",_GrossSalesAvg,
+    "GrossSales",[Gross Sales]
+    ),
+    [GrossSales] <> BLANK()
+)
+RETURN
+CALCULATE( SUMX(  __GrossSalesAvgTable,[GrossSalesAverage] ))
+```
+```DAX
+Gross Sales MoM % Color = 
+VAR _Value_ = [Gross Sales MoM% Dynamic]
+VAR _Result = 
+    SWITCH( 
+        TRUE(),
+        ISBLANK(_Value_),BLANK(),
+        _Value_ < 0, "#FAC8C6", // light red
+        _Value_ >= 0, "#DFF6F3", //pale teal
+        "#FFFFF" //white
+    )
+RETURN _Result
+```
+```DAX
+Gross Sales MoM% Dynamic = 
+
+VAR _LatestVisiblePeriod = CALCULATE( MAX( DIM_Calendar[Month Year] ),FILTER( ALLSELECTED( DIM_Calendar),[Products Sold] <> BLANK() ) )
+VAR _CurrentMonthStart = 
+    CALCULATE(
+        MIN( DIM_Calendar[Date] ), 
+        DIM_Calendar[Month Year] = _LatestVisiblePeriod 
+    )
+
+VAR _CurrentMonthSales = 
+    CALCULATE(
+        [Gross Sales], 
+        REMOVEFILTERS( DIM_Calendar), 
+        DATESBETWEEN(
+            DIM_Calendar[Date],
+            EOMONTH( _CurrentMonthStart, -2 ) + 1, 
+            EOMONTH( _CurrentMonthStart, -1 ) 
+        )
+    )
+
+VAR _PreviousMonthSales= 
+CALCULATE(
+    [Gross Sales], 
+    REMOVEFILTERS( DIM_Calendar), 
+    DATESBETWEEN(
+        DIM_Calendar[Date],
+        EOMONTH( _CurrentMonthStart, -3 ) + 1, 
+        EOMONTH( _CurrentMonthStart, -2 ) 
+    )
+)
+VAR _Result =
+IF(
+    _PreviousMonthSales > 0, 
+    (_CurrentMonthSales   - _PreviousMonthSales ) / _PreviousMonthSales , BLANK() 
+)
+RETURN _Result
+```
+```DAX
+Gross Sales MoM% Dynamic = 
+
+VAR _LatestVisiblePeriod = CALCULATE( MAX( DIM_Calendar[Month Year] ),FILTER( ALLSELECTED( DIM_Calendar),[Products Sold] <> BLANK() ) )
+VAR _CurrentMonthStart = 
+    CALCULATE(
+        MIN( DIM_Calendar[Date] ), 
+        DIM_Calendar[Month Year] = _LatestVisiblePeriod 
+    )
+
+VAR _CurrentMonthSales = 
+    CALCULATE(
+        [Gross Sales], 
+        REMOVEFILTERS( DIM_Calendar), 
+        DATESBETWEEN(
+            DIM_Calendar[Date],
+            EOMONTH( _CurrentMonthStart, -2 ) + 1, 
+            EOMONTH( _CurrentMonthStart, -1 ) 
+        )
+    )
+
+VAR _PreviousMonthSales= 
+CALCULATE(
+    [Gross Sales], 
+    REMOVEFILTERS( DIM_Calendar), 
+    DATESBETWEEN(
+        DIM_Calendar[Date],
+        EOMONTH( _CurrentMonthStart, -3 ) + 1, 
+        EOMONTH( _CurrentMonthStart, -2 ) 
+    )
+)
+VAR _Result =
+IF(
+    _PreviousMonthSales > 0, 
+    (_CurrentMonthSales   - _PreviousMonthSales ) / _PreviousMonthSales , BLANK() 
+)
+RETURN _Result
+``````DAX
+Gross Sales MoM% Dynamic Label = 
+VAR _MoM = [Gross Sales MoM% Dynamic]
+VAR _Result = 
+SWITCH(TRUE(),
+    _MoM = BLANK(),"",
+    _MoM < 0,"🠋 "&FORMAT( _MoM,"0.0"&"%" ),
+    _MoM >= 0,"🠉 "&FORMAT( _MoM,"0.0"&"%" )
+)
+RETURN _Result
+```
